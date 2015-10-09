@@ -120,11 +120,26 @@ Which are equivalent to the respective snippets above. These instructions will c
 
 ## Chapter 3: Control Flow
 
-### Functions
+### Subroutines
+Subroutines are the basic unit of computation in a program. They are a sequence of instructions to executed and are analogous to a function in C. Since most GBA games are programmed in C, it can be helpful to think of the code in terms of a collection of functions. The GBA is a single threaded, so no two functions are executed in parallel. When viewing code in a typical GBA game, almost all code belongs to a subroutine.
+
+Subroutines can take arguments, which generally modify the operation of a function, and can return a value, which is the output of a function. Some functions will also modify the external environment by setting RAM addresses. These are known as *impure functions*. Functions that only use their input arguments and return a value are known as *pure functions*.
 
 ### Calling Convention
+Since there are a number of ways arguments can be supplied to a function, and a number of ways values could be returned, we need to establish a *calling convention* which describes how functions do these tasks. The only important thing about a convention is that it is consistent, i.e. it is used everywhere. This is important, since a program might use code that it does have the source code of. Without a convention in place, code consuming that compiled code would be unable to pass arguments or read a return value.
+
+There are many possible calling conventions, but the typical one we see in ARM code is:
+
+- Arguments are passed in registers r0-r3
+- Any arguments beyond that are to be passed on the stack
+- Return values are sent back in r0
+- Registers r4-r11 and SP must be preserved by a function
+
+This is the standard calling convention for all 32 bit ARM code. More about this convention and other calling conventions in general can be found on the Wikipedia page.
 
 ### Comparisons
+
+
 
 ### Branches
 
