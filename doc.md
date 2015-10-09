@@ -256,3 +256,6 @@ Most hackers have no understanding of how `CMP` works. The process is simple. It
 
 The differences between Overflow and Carry are confusing. For a great explanation on this, see [this page](http://teaching.idallen.com/dat2343/10f/notes/040_overflow.txt).
 
+## Next Steps and Further Reading
+
+The internet is a fantastic resource for learning. Check out some of the ASM tutorials on The Pokecommunity, Read [GBATEK](http://problemkaputt.de/gbatek.htm), Check out [tonc](http://coranac.com/tonc/text/) for some C programming for the GBA (C is incredibly helpful to learn). Find yourself a copy of IDA Pro and use the [IDBs](http://caveoforig.in/?m=proj) to view the ROM code. I might cover some IDA disassembly in a later version of this document.
