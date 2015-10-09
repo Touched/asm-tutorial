@@ -226,4 +226,18 @@ You must specify whether that address is in ARM mode or in THUMB mode. Since THU
 
 #### Long Branch with Link
 
+What happens if we want to combine the unlimited range of `BX` with the function calling capabilities of `BL`? ARMv5 and above contain an extra branching instruction `BLX`. This works exactly like `BX`, except it sets `LR`. However, since the GBA uses ARMv4, we don't have access to this instruction. Therefore, you'll see a common hack in assembly code to do this.
+
+````
+@ Some code
+ldr r0, some_function
+bl linker
+@ Rest of my code - function will return here
+
+linker:
+bx r0
+````
+
+This hack preloads the function address, then uses `BL` to set the `LR` to the location directly after it. The `BL` then calls our `linker` function, which just branches to the function address we preloaded. The function will then return to the code after the `BL`. This is a common pattern seen in hackers' ASM code. It allows us to overcome the range limitation of `BL` and call built-in functions from free space. You will also see this pattern in game code when the address of the function being called is only known at run time.
+
 ### CPSR
