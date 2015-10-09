@@ -172,7 +172,7 @@ The unconditional branch instruction `B` simply increments PC. In assembly, you 
 
 #### Conditional Branching
 
-The conditional branch is more obviously useful. These typically follow a compare instruction and will jump when the condition is true. For example,
+The conditional branch is more obviously useful. These typically (not always) follow a compare instruction and will jump when the condition is true. For example,
 
 ````
 cmp r0, r1
@@ -241,3 +241,18 @@ bx r0
 This hack preloads the function address, then uses `BL` to set the `LR` to the location directly after it. The `BL` then calls our `linker` function, which just branches to the function address we preloaded. The function will then return to the code after the `BL`. This is a common pattern seen in hackers' ASM code. It allows us to overcome the range limitation of `BL` and call built-in functions from free space. You will also see this pattern in game code when the address of the function being called is only known at run time.
 
 ### CPSR
+
+The CPSR stands for Current Program Status Register, and is terribly under-utilised by most hackers, but is responsible for controlling the operation conditional branches. In ARMv4, this register (it is separate from the standard 16) contains four flags: Zero (Z), Overflow (V), Sign (N) and Carry (C). Most instructions will set one or more of these flags. Compare sets them all. Each conditonal branch checks one or more of these flags and acts accordingly. See GBATEK for more.
+
+Most hackers have no understanding of how `CMP` works. The process is simple. It simply subtracts the two registers and sets the flags based on the result:
+
+- Zero: When the result of the subtraction is zero, this flag is set. Otherwise it is cleared. `BEQ` checks if Z is set because the only time that `a - b = 0` is when `a = b`.
+
+- Sign: When the result is negative, this is set, otherwise it is cleared. `BMI` (Branch if minus) checks if N is set, because that would mean the result is negative
+
+- Carry: When the right hand side of the subtraction is bigger than the left, you must carry (think basic arithmetic: you have to "carry" the value when subtracting 16 from 15). This is used to compare unsigned numbers. `BHI` (Branch if higher) checks if C is set, because that would mean the right hand side of the subtraction is higher. It also checks Z = 0, because that would indicate equality.
+
+- Overflow: Overflow is similar to carry, but for signed numbers. When the subtraction causes the register to "overflow", it is set. `BGT` (branch greater than) checks if V=N because overflow checks if the sign changed. If the changed sign matches the result sign, the right hand side of the compare is larger (signed).
+
+The differences between Overflow and Carry are confusing. For a great explanation on this, see [this page](http://teaching.idallen.com/dat2343/10f/notes/040_overflow.txt).
+
