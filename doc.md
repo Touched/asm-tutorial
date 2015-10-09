@@ -130,19 +130,100 @@ Since there are a number of ways arguments can be supplied to a function, and a 
 
 There are many possible calling conventions, but the typical one we see in ARM code is:
 
-- Arguments are passed in registers r0-r3
+- Arguments are passed in registers `R0`-`R3`
 - Any arguments beyond that are to be passed on the stack
 - Return values are sent back in r0
-- Registers r4-r11 and SP must be preserved by a function
+- Registers `R4`-`R11` and `SP` must be preserved by a function
+- Functions return to the address in `LR`, i.e. they set `PC` to `LR` after completing.
 
-This is the standard calling convention for all 32 bit ARM code. More about this convention and other calling conventions in general can be found on the Wikipedia page.
+This is the standard calling convention for all 32 bit ARM code. More about this convention and other calling conventions in general can be found on the [Wikipedia page](https://en.wikipedia.org/wiki/Calling_convention#ARM_.28A32.29).
+
+Because we expect parameters to be contained in `R0` to `R3`, we do not need to push them to the stack when calling a function. Any routine calling a function in the ARM convention must expect `R0` to `R3` to hold different values coming out of a function than they had going in. A typical function in ARM will look like
+
+````
+push {r4-r5, lr}
+bl some_other_function
+pop {r4-r5}
+pop {r1}
+bx r1
+````
+
+It can also take the form,
+
+````
+push {r4-r5, lr}
+bl some_other_function
+pop {r4-r5, pc}
+````
+
+The latter case is when ARM-THUMB inter-working is not required. Please see the Branch and Exchange section for more information about this.
 
 ### Comparisons
 
-
+In order to make decisions, a CPU has to be able to compare two values together. In ARMv4, this is done with the compare instruction, `CMP` (or the compare negative instruction, `CMN`). With this instruction, you can compare two registers and move to a different area of code based on the result of this comparison. Compare by itself does nothing, and needs to be followed by a branch instruction in order to have any effect.
 
 ### Branches
 
-### Conditional Branching
+Branches allow you to move to another area of code. There are four classes of branch that will be discussed, starting with the simplest
+
+#### Unconditional Branch
+
+The unconditional branch instruction `B` simply increments PC. In assembly, you typically provide a label and then it will calculate the distance to jump upon assembling the code. This is deceptive as it creates the illusion that you can jump an arbitrary distance backwards or forwards. Rather, the unconditional branch function is limited to a distance of 2048 bytes backwards and 2046 bytes forwards. The unconditional branch is typically used to jump over blocks of data in a routine or provide a fall-through case for a condition, such as looping.
+
+#### Conditional Branching
+
+The conditional branch is more obviously useful. These typically follow a compare instruction and will jump when the condition is true. For example,
+
+````
+cmp r0, r1
+beq some_place
+````
+
+This code will jump to the label `some_place` when r0 and r1 are equal because of the Branch if Equal instruction `BEQ`.
+
+See [GBATEK](http://problemkaputt.de/gbatek.htm#thumbopcodesjumpsandcalls) for more conditional branches.
+
+A conditional branch can only jump 128 instructions backwards or 127 instructions forwards. The perceptive among you will notice that that is the range of a signed byte. That is because the opcodes for conditional branches only contain 8 bits for the offset of the branch.
+
+#### Branch with Link
+
+Functions must return to their calling functions after they finish. As discussed above, the return location for a function is stored in `LR`. How does this register get set? When calling a function, we use a special instruction `BL` (Branch with Link). This function sets `LR` to the address of the instruction proceeding it, or more succinctly,
+
+````
+LR = PC + 4
+````
+
+Why plus four? Aren't instructions in THUMB 16 bits long? Well `BL` is the exception to this rule. It is the only instruction which occupies 4 bytes. Thus the address for the instruction after the `BL` would be four bytes after the value in `PC`. Because `BL` sets `LR`, the function is calls knows where to jump back to when it is finished doing its work. As shown in the calling convention, functions must return to this address themselves.
+
+`BL` takes 4 bytes to allow an increased range, however it is not limitless. It has a range of 22 bits, so it can be 0x400000 bytes back, or 0x3FFFFE bytes forward. 
+
+#### Branch and Exchange
+
+The last branch type in ARMv4 is called *B*ranch and E*x*change or `BX`. This branch is the only one to have an unlimited range, and the only one to allow a register. All the other branches are relative and thus require a distance or a label.
+
+The "exchange" part of this branch means that it change switch between ARM and THUMB code. This can *only* happen with this instruction. All other branches, as well as direct modification of `PC` will assume the target code is in THUMB mode.
+
+We saw an example of a function earlier,
+
+````
+push {r4-r5, lr}
+bl some_other_function
+pop {r4-r5}
+pop {r1}
+bx r1
+````
+
+The reason for the `BX` is now clear: This function allows you to return to ARM code, thus it can be called from either ARM or THUMB code and it will work as expected.
+
+If you are calling a function using an address in a register, such as
+
+````
+ldr r0, some_address
+bx r0
+````
+
+You must specify whether that address is in ARM mode or in THUMB mode. Since THUMB mode is 2 bytes per instruction and ARM is 4, both modes must be on an even address. Even addresses have the property that the right-most bit is *always* zero. Thus, we can use that bit to indicate ARM or THUMB mode. When calling THUMB mode, we make the address odd, thus THUMB routines called with BX are always the address of the function plus one.
+
+#### Long Branch with Link
 
 ### CPSR
