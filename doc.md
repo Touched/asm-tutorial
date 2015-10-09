@@ -1,6 +1,37 @@
 # Assembler for the GBA
 
+## Introduction
+
+This is a document designed to increase your knowledge of assembly hacking on the Game Boy Advance. It is not a tutorial where I give you a template piece of ASM and you execute it and are left wondering what the fuck you just did. The purpose of this document is not to get you to write ASM just yet, but rather to allow you to understand ASM and hopefully provide you with some pointers (no pun intended) on where to go next. I write this document expecting the reader to have some baseline knowledge about computers and ROM hacking. I expect you to be able to search online and read Wikipedia articles. I expect you to consult GBATEK, a fantastic resource on everything GBA related.
+
+I do not aim to teach you "all the opcodes" or provide a guide on how to implement a certain feature. I do aim to increase your level of understanding and then go off and learn these things yourself. As hackers, we spend a vast amount of time researching and reading assembly code. You cannot write what you cannot read and understand. If you cannot learn to do these things for yourself, you might as well stop reading. If you relish the challenge of understanding something complex and technical, then read on.
+
+Be warned, this document contains lots of theory and may look like a wall of text. I have tried to explain it in as friendly a way as possible. If something is not clear, please open an issue and I will do my best to rectify it. 
+
 ## Chapter 1: Memory
+
+### Addressing and The Bus
+A CPU is very good at performing computations, but not very good at remembering the results of those computations. This is where memory comes into play. The GBA has various blocks of memory, each with their own purpose. Despite these blocks of memory being physically distinct (they are typically on different chips), the software sees them as (almost) a single, contiguous block.
+In order to access this memory, we use what is known as an *address*. The address carries with it two pieces of information: the memory block or region to access, and the offset from the start of that location. This is viewed as a single, 32 bit number. The 8 most significant bits of this number are the block, and the remaining bits are the offset.
+
+|--|------|
+|08|123456|
+
+In the above example, we see an address marked by the number `08`, which indicates that the address we are looking for is in the ROM. The number `123456` indicates that the data we are looking for in the ROM can be found 123456 bytes from the beginning of the ROM region. Each region in the memory is mapped using a specific number
+
+| Prefix | Region  |
+|--------|---------|
+| 08-09  | ROM     |
+| 02     | EWRAM   |
+| 03     | IWRAM   |
+| 05     | Palettes|
+
+A more complete list can be found on GBATEK.
+
+Each block of memory is accessed via an *Address Bus*. The bus is simply a connection which allows data to travel to (and from) the block of memory. The width of the address bus dictates how much data can travel over that bus at any given time. For example, the ROM's address bus is 16 bits wide. This means that only 16 bits can travel over the bus at any time. It is possible to read 32 bits (and more) from the ROM, however it requires 2 (or more) trips across the bus to get that.
+You might've heard that there are two types of instruction set on the GBA. THUMB and ARM, and that THUMB is faster. Well there is your reason. THUMB is "faster" because it uses 16 bit per instruction, whereas ARM uses 32 bits. In order to read a single ARM instruction from the ROM, you must take two trips across the bus before you can execute it. THUMB only takes one trip, thus executing THUMB from the ROM is faster than executing ARM.
+If you were to copy ARM code over to block of RAM with a 32 bit bus, it would be just as fast.
+You may be wondering about the difference between the IWRAM (Internal Work RAM) and the EWRAM (External Work RAM) in the table above. The IWRAM has a 32 bit address bus, while the EWRAM has a 16 bit address bus. While the EWRAM is bigger, the IWRAM provides faster 32 bit reads (and is faster in general). Data that is accessed often and 32 bit data (like pointers) are often stored in the IWRAM, while other data is stored in EWRAM. 
 
 ## Chapter 2: The CPU
 
