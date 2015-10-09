@@ -14,11 +14,13 @@ Be warned, this document contains lots of theory and may look like a wall of tex
 A CPU is very good at performing computations, but not very good at remembering the results of those computations. This is where memory comes into play. The GBA has various blocks of memory, each with their own purpose. Despite these blocks of memory being physically distinct (they are typically on different chips), the software sees them as (almost) a single, contiguous block.
 In order to access this memory, we use what is known as an *address*. The address carries with it two pieces of information: the memory block or region to access, and the offset from the start of that location. This is viewed as a single, 32 bit number. The 8 most significant bits of this number are the block, and the remaining bits are the offset.
 
-|PR|OFFSET|
-|--|------|
-|08|123456|
+For example, the address 08123456:
 
-In the above example, we see an address marked by the number `08`, which indicates that the address we are looking for is in the ROM. The number `123456` indicates that the data we are looking for in the ROM can be found 123456 bytes from the beginning of the ROM region. Each region in the memory is mapped using a specific number
+| Prefix | Offset |
+|--------|--------|
+| 08     | 123456 |
+
+In the above example, we see an address marked by the number `08`, which indicates that the address we are looking for is in the ROM. The number `123456` indicates that the data we are looking for in the ROM can be found 123456 bytes from the beginning of the ROM region. Each region in the memory is mapped using a specific number:
 
 | Prefix | Region  |
 |--------|---------|
